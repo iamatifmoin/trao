@@ -11,6 +11,23 @@
   },
   "dependencies": {
     "@prep-kit/core": "*",
-    "@prep-kit/schema": "*"
+    "@prep-kit/schema": "*",
+    "express": "^5.0.1",
+    "express-session": "^1.18.1",
+    "connect-mongo": "^5.1.0",
+    "bcryptjs": "^2.4.3",
+    "mongodb": "^6.9.0",
+    "cors": "^2.8.5",
+    "zod": "^3.23.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/express-session": "^1.18.0",
+    "@types/cors": "^2.8.17",
+    "@types/bcryptjs": "^2.4.6",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2",
+    "mongodb-memory-server": "^10.1.2"
   }
 }

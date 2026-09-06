@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "evaluate": "npm run start --workspace apps/cli --",
+    "evaluate": "tsx apps/cli/src/evaluate.ts",
     "dev:web": "npm run dev --workspace apps/web",
     "dev:api": "npm run dev --workspace apps/api",
     "build": "npm run build --workspaces --if-present",

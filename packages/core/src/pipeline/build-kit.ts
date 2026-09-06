@@ -17,12 +17,34 @@ export interface BuildKitInput {
   daysAvailable: number;
   /** Defaults to NODE_ENV !== "production" — callers that know their environment (API, CLI) may set this explicitly. */
   allowPrivateNetworks?: boolean;
+  /** Called at each major phase transition — the API uses this to drive visible progress (Section 1); the CLI ignores it. */
+  onProgress?: (step: string) => void;
+}
+
+export interface BuildKitResearchPage {
+  url: string;
+  title: string;
+  text: string;
+}
+
+export interface BuildKitResearchSnippet {
+  url: string;
+  title: string;
+  snippet: string;
+}
+
+/** Exactly what fed the company brief and every question category's prompt — persisted so a later regeneration reuses it instead of re-crawling the company site. */
+export interface BuildKitResearch {
+  hiringSignals: string;
+  briefPages: BuildKitResearchPage[];
+  searchSnippets: BuildKitResearchSnippet[];
 }
 
 export interface BuildKitResult {
   kit: Kit;
   /** Non-fatal problems worth surfacing: unreachable pages, no hiring page found, no public discussion, unclosed coverage gaps. */
   warnings: string[];
+  research: BuildKitResearch;
 }
 
 const MAX_COVERAGE_PASSES = 3;
@@ -83,7 +105,9 @@ async function researchCompany(
 export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
   const warnings: string[] = [];
   const allowPrivateNetworks = input.allowPrivateNetworks ?? process.env.NODE_ENV !== "production";
+  const onProgress = input.onProgress ?? (() => undefined);
 
+  onProgress("Extracting requirements from the job description, and researching the company site");
   const [analysis, research] = await Promise.all([
     extractRequirements(input.jd),
     researchCompany(input.companyUrl, allowPrivateNetworks, warnings),
@@ -101,13 +125,21 @@ export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
   const technicalReqs = requirements.filter((r) => r.kind === "technical" || r.kind === "domain").map(toPromptReq);
   const behaviouralReqs = requirements.filter((r) => r.kind === "behavioural").map(toPromptReq);
 
+  const briefPages: BuildKitResearchPage[] = research.classified
+    .filter((c) => c.signal !== "other")
+    .map((c) => ({ url: c.page.finalUrl, title: c.page.title, text: truncate(c.page.text, 3000) }));
+  const searchSnippets: BuildKitResearchSnippet[] = research.searchResults.map((s) => ({
+    url: s.url,
+    title: s.title,
+    snippet: s.snippet,
+  }));
+
+  onProgress("Generating the company brief and interview questions for each category");
   const [brief, technicalQs, systemDesignQs, behaviouralQs, companyFitQs] = await Promise.all([
     buildCompanyBrief({
       companyUrl: input.companyUrl,
-      pages: research.classified
-        .filter((c) => c.signal !== "other")
-        .map((c) => ({ url: c.page.finalUrl, title: c.page.title, text: truncate(c.page.text, 3000) })),
-      searchSnippets: research.searchResults.map((s) => ({ url: s.url, title: s.title, snippet: s.snippet })),
+      pages: briefPages,
+      searchSnippets,
     }),
     generateQuestions({ category: "technical", requirements: technicalReqs, hiringSignals }),
     generateQuestions({ category: "system-design", requirements: technicalReqs, hiringSignals }),
@@ -139,10 +171,12 @@ export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
   // Second pass: close must-have coverage gaps only. Nice-to-have gaps are
   // reported honestly rather than chased — Section 4's failure condition is
   // specifically an uncovered must-have.
+  onProgress("Checking requirement coverage");
   let passes = 1;
   let coverage = checkCoverage(requirements, questions);
 
   while (coverage.uncoveredMustRequirementIds.length > 0 && passes < MAX_COVERAGE_PASSES) {
+    onProgress(`Closing coverage gaps (pass ${passes + 1})`);
     const uncoveredMustReqs = requirements.filter((r) => coverage.uncoveredMustRequirementIds.includes(r.id));
     const uncoveredTechnical = uncoveredMustReqs.filter((r) => r.kind === "technical" || r.kind === "domain").map(toPromptReq);
     const uncoveredBehavioural = uncoveredMustReqs.filter((r) => r.kind === "behavioural").map(toPromptReq);
@@ -178,6 +212,7 @@ export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
     );
   }
 
+  onProgress("Generating flashcards");
   const generatedFlashcards = await generateFlashcards(
     questions.map((q) => ({
       id: q.id,
@@ -196,6 +231,7 @@ export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
   }));
 
   // Deterministic — never the model's call (Section 3, Section 8).
+  onProgress("Building the study schedule");
   const scheduleDays = allocateSchedule(
     questions.map((q) => ({ id: q.id, category: q.category, difficulty: q.difficulty, requirement_ids: q.requirement_ids })),
     requirements.map((r) => ({ id: r.id, priority: r.priority })),
@@ -227,10 +263,11 @@ export async function buildKit(input: BuildKitInput): Promise<BuildKitResult> {
     coverage: { uncovered_requirement_ids: coverage.uncoveredRequirementIds, passes },
   };
 
+  onProgress("Validating the generated kit");
   const validation = validateKit(kit);
   if (!validation.valid) {
     throw new Error(`buildKit produced a kit that failed its own structure validation: ${validation.errors.join("; ")}`);
   }
 
-  return { kit, warnings };
+  return { kit, warnings, research: { hiringSignals, briefPages, searchSnippets } };
 }

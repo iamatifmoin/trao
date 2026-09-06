@@ -2,7 +2,8 @@ import { config } from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
-import { buildKit, GeminiError, type Kit } from "@prep-kit/core";
+import { buildKit, classifyBuildKitError } from "@prep-kit/core";
+import type { Kit } from "@prep-kit/schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, "../../../.env") });
@@ -66,23 +67,6 @@ function idOf(raw: unknown): string {
   return "unknown";
 }
 
-/** A small, stable set of codes rather than surfacing raw provider error strings — Section 9's batch output should be a diagnosable, structured failure. */
-function errorCodeFor(err: unknown): string {
-  if (err instanceof GeminiError) {
-    switch (err.code) {
-      case "RATE_LIMITED":
-        return "LLM_RATE_LIMITED";
-      case "NOT_CONFIGURED":
-        return "LLM_NOT_CONFIGURED";
-      case "INVALID_JSON":
-        return "LLM_INVALID_OUTPUT";
-      default:
-        return "LLM_ERROR";
-    }
-  }
-  return "GENERATION_FAILED";
-}
-
 async function main(): Promise<void> {
   const { input, output } = parseArgs(process.argv.slice(2));
 
@@ -125,9 +109,9 @@ async function main(): Promise<void> {
       results.push({ id: evalCase.id, status: "ok", kit, error: null });
       console.error(`[${evalCase.id}] done`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(`[${evalCase.id}] failed: ${message}`);
-      results.push({ id: evalCase.id, status: "failed", kit: null, error: { code: errorCodeFor(err), message } });
+      const classified = classifyBuildKitError(err);
+      console.error(`[${evalCase.id}] failed: ${classified.message}`);
+      results.push({ id: evalCase.id, status: "failed", kit: null, error: classified });
     }
   }
 
