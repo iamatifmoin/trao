@@ -1,0 +1,16 @@
+{
+  "name": "@prep-kit/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prep-kit/core": "*",
+    "@prep-kit/schema": "*"
+  }
+}

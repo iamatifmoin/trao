@@ -1,0 +1,28 @@
+{
+  "name": "ai-interview-prep-kit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The AI Interview Prep Kit — full-stack engineering assessment",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "evaluate": "npm run start --workspace apps/cli --",
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:api": "npm run dev --workspace apps/api",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "tsx": "^4.19.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^22.7.0"
+  }
+}

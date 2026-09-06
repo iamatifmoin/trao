@@ -1,0 +1,17 @@
+{
+  "name": "@prep-kit/cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "evaluate": "./dist/evaluate.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --loader ts-node/esm src/evaluate.ts"
+  },
+  "dependencies": {
+    "@prep-kit/core": "*",
+    "@prep-kit/schema": "*"
+  }
+}
