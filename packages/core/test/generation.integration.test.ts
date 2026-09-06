@@ -12,10 +12,10 @@ const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY);
 describe.skipIf(!hasGeminiKey)("generation steps (live Gemini)", () => {
   it("extracts only what's stated from a thin two-line job description, without padding", async () => {
     const jd = "Backend Engineer.\nMust know Python.";
-    const requirements = await extractRequirements(jd);
-    expect(requirements.length).toBeGreaterThan(0);
-    expect(requirements.length).toBeLessThanOrEqual(3);
-    expect(requirements.some((r) => /python/i.test(r.text))).toBe(true);
+    const analysis = await extractRequirements(jd);
+    expect(analysis.requirements.length).toBeGreaterThan(0);
+    expect(analysis.requirements.length).toBeLessThanOrEqual(3);
+    expect(analysis.requirements.some((r) => /python/i.test(r.text))).toBe(true);
   }, 30_000);
 
   it("distinguishes must vs nice from a fuller description's own wording", async () => {
@@ -27,9 +27,10 @@ Requirements:
 
 Nice to have:
 - Bonus points for experience with Kubernetes`;
-    const requirements = await extractRequirements(jd);
-    const nodeReq = requirements.find((r) => /node/i.test(r.text));
-    const k8sReq = requirements.find((r) => /kubernetes/i.test(r.text));
+    const analysis = await extractRequirements(jd);
+    expect(analysis.title.length).toBeGreaterThan(0);
+    const nodeReq = analysis.requirements.find((r) => /node/i.test(r.text));
+    const k8sReq = analysis.requirements.find((r) => /kubernetes/i.test(r.text));
     expect(nodeReq?.priority).toBe("must");
     expect(k8sReq?.priority).toBe("nice");
   }, 30_000);

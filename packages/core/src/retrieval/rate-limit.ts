@@ -4,21 +4,35 @@ export function sleep(ms: number): Promise<void> {
 
 /**
  * Enforces a minimum gap between requests to the same host, so a crawl
- * doesn't hammer a company's site. Per-host so crawling one slow host
- * doesn't throttle requests to another.
+ * doesn't hammer a company's site and so a burst of concurrent LLM calls
+ * (e.g. generating several question categories at once) gets spaced out
+ * instead of firing together. Per-host so one slow host doesn't throttle
+ * requests to another.
+ *
+ * Each call to wait() chains onto the previous one for that host via
+ * .then(), rather than reading-then-writing a shared timestamp directly —
+ * plain read-then-write breaks under concurrency, because several calls
+ * fired in the same tick (e.g. via Promise.all) would all read the same
+ * stale "last request" time before any of them had a chance to update it,
+ * letting the whole burst through at once instead of being spaced out.
+ * Chaining forces each call to wait its turn behind the one before it.
  */
 export class HostRateLimiter {
-  private lastRequestAt = new Map<string, number>();
+  private chains = new Map<string, Promise<number>>();
 
   constructor(private minIntervalMs = 500) {}
 
   async wait(host: string): Promise<void> {
-    const last = this.lastRequestAt.get(host) ?? 0;
-    const elapsed = Date.now() - last;
-    if (elapsed < this.minIntervalMs) {
-      await sleep(this.minIntervalMs - elapsed);
-    }
-    this.lastRequestAt.set(host, Date.now());
+    const previous = this.chains.get(host) ?? Promise.resolve(0);
+    const current = previous.then(async (lastRequestAt) => {
+      const elapsed = Date.now() - lastRequestAt;
+      if (elapsed < this.minIntervalMs) {
+        await sleep(this.minIntervalMs - elapsed);
+      }
+      return Date.now();
+    });
+    this.chains.set(host, current);
+    await current;
   }
 }
 

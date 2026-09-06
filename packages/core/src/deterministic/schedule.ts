@@ -1,7 +1,8 @@
 export interface ScheduleQuestionInput {
   id: string;
   category: string;
-  difficulty: 1 | 2 | 3;
+  /** 1-3 per Appendix A; typed as `number` here since it's fed from the validated Kit schema's plain-number field. */
+  difficulty: number;
   requirement_ids: string[];
 }
 
@@ -19,7 +20,7 @@ export interface AllocatedScheduleDay {
 
 const MIN_DAY_MINUTES = 30;
 const MAX_DAY_MINUTES = 180;
-const DIFFICULTY_MINUTES: Record<1 | 2 | 3, number> = { 1: 10, 2: 15, 3: 25 };
+const DIFFICULTY_MINUTES: Record<number, number> = { 1: 10, 2: 15, 3: 25 };
 
 const CATEGORY_LABELS: Record<string, string> = {
   technical: "Technical deep-dive",

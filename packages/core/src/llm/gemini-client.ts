@@ -7,6 +7,8 @@ export class GeminiError extends Error {
   constructor(
     public code: GeminiErrorCode,
     message: string,
+    /** Raw detail from the provider's error body, when available — lets a caller tell "slow down a bit" apart from "daily quota exhausted." */
+    public detail?: string,
   ) {
     super(message);
     this.name = "GeminiError";
@@ -16,7 +18,7 @@ export class GeminiError extends Error {
 // A free-tier project shares one rate budget across every call this process
 // makes, so a single limiter (keyed on a constant "host") is shared by
 // default. Tests inject their own zero-interval limiter to run fast.
-export const defaultGeminiLimiter = new HostRateLimiter(Number(process.env.GEMINI_MIN_INTERVAL_MS ?? 4000));
+export const defaultGeminiLimiter = new HostRateLimiter(Number(process.env.GEMINI_MIN_INTERVAL_MS ?? 6500));
 
 export interface GeminiCallOptions {
   systemInstruction?: string;
@@ -72,14 +74,21 @@ export async function callGemini(prompt: string, opts: GeminiCallOptions = {}): 
       }
 
       if (response.status === 429) {
-        throw new GeminiError("RATE_LIMITED", "Gemini rate-limited the request");
+        const detail = await safeReadBody(response);
+        throw new GeminiError(
+          "RATE_LIMITED",
+          detail?.toLowerCase().includes("perday") || detail?.toLowerCase().includes("daily")
+            ? "Gemini's free-tier daily quota appears to be exhausted"
+            : "Gemini rate-limited the request",
+          detail,
+        );
       }
       if (response.status >= 500) {
-        throw new GeminiError("API_ERROR", `Gemini returned HTTP ${response.status}`);
+        throw new GeminiError("API_ERROR", `Gemini returned HTTP ${response.status}`, await safeReadBody(response));
       }
       if (!response.ok) {
-        const body = await response.text();
-        throw new GeminiError("API_ERROR", `Gemini returned HTTP ${response.status}: ${body.slice(0, 300)}`);
+        const body = await safeReadBody(response);
+        throw new GeminiError("API_ERROR", `Gemini returned HTTP ${response.status}: ${body?.slice(0, 300)}`, body);
       }
 
       const data = (await response.json()) as {
@@ -92,11 +101,19 @@ export async function callGemini(prompt: string, opts: GeminiCallOptions = {}): 
       return text;
     },
     {
-      retries: opts.retries ?? 4,
-      baseDelayMs: opts.baseDelayMs ?? 3000,
+      retries: opts.retries ?? 3,
+      baseDelayMs: opts.baseDelayMs ?? 4000,
       shouldRetry: isRetryableGeminiError,
     },
   );
+}
+
+async function safeReadBody(response: Response): Promise<string | undefined> {
+  try {
+    return await response.text();
+  } catch {
+    return undefined;
+  }
 }
 
 function stripCodeFences(text: string): string {

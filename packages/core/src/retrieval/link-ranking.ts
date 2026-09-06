@@ -4,7 +4,7 @@ import type { ExtractedLink } from "./html.js";
 // page" vs. a more general company page. Section 2 warns a fixed path list
 // is not sufficient, so this ranks candidates by signal rather than
 // hard-coding "/careers".
-const STRONG_HIRING_KEYWORDS = [
+export const STRONG_HIRING_KEYWORDS = [
   "career",
   "careers",
   "job",
@@ -20,9 +20,9 @@ const STRONG_HIRING_KEYWORDS = [
   "work-with-us",
 ];
 
-const COMPANY_INFO_KEYWORDS = ["about", "company", "who-we-are", "mission"];
+export const COMPANY_INFO_KEYWORDS = ["about", "company", "who-we-are", "mission"];
 
-const WEAK_SIGNAL_KEYWORDS = ["team", "culture", "engineering", "life-at", "blog"];
+export const WEAK_SIGNAL_KEYWORDS = ["team", "culture", "engineering", "life-at", "blog"];
 
 export function scoreLink(link: ExtractedLink, rootOrigin: string): number {
   let url: URL;
