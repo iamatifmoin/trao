@@ -1,14 +1,14 @@
 [
   {
-    "id": "case-invalid",
-    "jd": 12345,
-    "company_url": "http://localhost:8099/acme/",
+    "id": "case-01",
+    "jd": "Senior Backend Engineer\n\nRequirements:\n- 5+ years with Node.js and distributed systems (required)\n- Experience mentoring junior engineers\n\nNice to have:\n- Bonus points for Kubernetes",
+    "company_url": "http://127.0.0.1:8099/acme/",
     "days": 5
   },
   {
-    "id": "case-unreachable-company",
+    "id": "case-02",
     "jd": "Backend Engineer.\nMust have 3+ years of Python experience.",
-    "company_url": "http://127.0.0.1:1/",
+    "company_url": "http://127.0.0.1:8099/nohiring/",
     "days": 2
   }
 ]
