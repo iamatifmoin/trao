@@ -79,8 +79,17 @@ async function researchCompany(
 
   const classified = classifyPages(crawl.pages);
   const companyName = deriveCompanyName(crawl.pages[0], companyUrl);
-  const searchResults = await searchPublicDiscussion(companyName);
-  if (searchResults.length === 0) {
+
+  // With zero pages crawled, deriveCompanyName has fallen back to parsing
+  // the bare hostname (e.g. an IP address), which isn't a real company
+  // identity — searching for it would just return generic "interview
+  // experience" content for whatever unrelated thing the search engine
+  // matched the topical keywords against, polluting the brief with noise
+  // rather than anything true about this company.
+  const searchResults = crawl.pages.length > 0 ? await searchPublicDiscussion(companyName) : [];
+  if (crawl.pages.length === 0) {
+    warnings.push("skipped the public-discussion search — no company identity could be established from an unreachable site");
+  } else if (searchResults.length === 0) {
     warnings.push("no public discussion of this company's interview process was found");
   }
 

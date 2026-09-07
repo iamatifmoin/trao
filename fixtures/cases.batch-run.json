@@ -1,0 +1,32 @@
+[
+  {
+    "id": "case-01-normal",
+    "jd": "Senior Backend Engineer\n\nWe build the platform that powers our widget-simulation product used by manufacturers worldwide.\n\nRequirements:\n- 5+ years of experience with Node.js and distributed systems (required)\n- Experience designing and operating production APIs\n- Comfortable mentoring junior engineers\n\nNice to have:\n- Bonus points for experience with Kubernetes\n- Familiarity with WebGL or 3D rendering a plus",
+    "company_url": "http://127.0.0.1:8099/acme/",
+    "days": 5
+  },
+  {
+    "id": "case-02-no-hiring-page",
+    "jd": "Industrial Sales Engineer\n\nContoso is looking for a Sales Engineer to support our fastener product line.\n\nRequirements:\n- 3+ years in technical sales, required\n- Strong communication skills\n- Bonus points for a mechanical engineering background",
+    "company_url": "http://127.0.0.1:8099/nohiring/",
+    "days": 3
+  },
+  {
+    "id": "case-03-thin-jd",
+    "jd": "Backend Engineer.\nMust have 3+ years of Python experience.",
+    "company_url": "http://127.0.0.1:8099/acme/",
+    "days": 2
+  },
+  {
+    "id": "case-04-unreachable-company",
+    "jd": "Frontend Engineer\n\nRequirements:\n- 4+ years with React, required\n- Experience with accessibility (a11y) best practices\n\nNice to have:\n- Bonus for design systems experience",
+    "company_url": "http://127.0.0.1:1/",
+    "days": 4
+  },
+  {
+    "id": "case-05-one-day",
+    "jd": "DevOps Engineer\n\nRequirements:\n- 2+ years with CI/CD pipelines, required\n- Experience with Terraform or similar IaC tools, required\n- Bonus points for Kubernetes experience",
+    "company_url": "http://127.0.0.1:8099/acme/",
+    "days": 1
+  }
+]

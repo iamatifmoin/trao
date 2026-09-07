@@ -18,7 +18,10 @@ export class GeminiError extends Error {
 // A free-tier project shares one rate budget across every call this process
 // makes, so a single limiter (keyed on a constant "host") is shared by
 // default. Tests inject their own zero-interval limiter to run fast.
-export const defaultGeminiLimiter = new HostRateLimiter(Number(process.env.GEMINI_MIN_INTERVAL_MS ?? 6500));
+// 4500ms ≈ 13.3 RPM, under the Flash Lite bucket's 15 RPM cap with margin
+// for jitter — tight enough that a 5-case batch run fits the 15-minute
+// budget, loose enough not to trip the limit on its own.
+export const defaultGeminiLimiter = new HostRateLimiter(Number(process.env.GEMINI_MIN_INTERVAL_MS ?? 4500));
 
 export interface GeminiCallOptions {
   systemInstruction?: string;
@@ -44,7 +47,12 @@ export async function callGemini(prompt: string, opts: GeminiCallOptions = {}): 
   if (!apiKey) {
     throw new GeminiError("NOT_CONFIGURED", "GEMINI_API_KEY is not set");
   }
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  // The plain "Flash" models (2.5/3/3.5/3.6/3.7/3.8) all share a tight
+  // free-tier bucket: 5 RPM / 20 RPD. The "Flash Lite" models in the 3.x
+  // generation are a separate, far larger bucket (15 RPM / 500 RPD) — the
+  // difference between "one kit exhausts the day" and "a full 5-case batch
+  // run fits comfortably." Confirmed via https://aistudio.google.com/rate-limit.
+  const model = process.env.GEMINI_MODEL ?? "gemini-3.5-flash-lite";
   const limiter = opts.rateLimiter ?? defaultGeminiLimiter;
 
   return withRetry(
