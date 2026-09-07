@@ -44,7 +44,7 @@ export async function callGemini(prompt: string, opts: GeminiCallOptions = {}): 
   if (!apiKey) {
     throw new GeminiError("NOT_CONFIGURED", "GEMINI_API_KEY is not set");
   }
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash-lite";
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
   const limiter = opts.rateLimiter ?? defaultGeminiLimiter;
 
   return withRetry(
