@@ -23,7 +23,14 @@ export function createSessionMiddleware(mongoUri: string, secret: string, isProd
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "lax",
+      // "Lax" only sends the cookie on top-level navigation across sites —
+      // never on cross-origin fetch/XHR, which is exactly how the deployed
+      // frontend (a different domain from the API) talks to this server.
+      // "None" is required for that, and browsers only honor SameSite=None
+      // when Secure is also set — which it already is in production.
+      // Locally, frontend and API share "localhost" as their registrable
+      // domain (only the port differs), so "Lax" is fine and safer there.
+      sameSite: isProduction ? "none" : "lax",
       maxAge: SESSION_MAX_AGE_MS,
     },
   });
