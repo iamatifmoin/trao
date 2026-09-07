@@ -12,6 +12,7 @@
     "declaration": true,
     "declarationMap": true,
     "isolatedModules": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"]
   }
 }
