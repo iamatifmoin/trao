@@ -3,8 +3,6 @@
 Turn a job description and a company URL into a structured, editable, practice-able interview
 preparation kit — researched, generated, and validated by code, not by a single prompt.
 
-Built for the Trao full-stack engineering assessment (`FS-AI-INTERVIEW-01`).
-
 ## Contents
 
 - [Overview & tech stack](#overview--tech-stack)
